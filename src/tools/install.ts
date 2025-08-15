@@ -39,16 +39,28 @@ const install = defineTool({
       stdio: 'pipe',
     });
     const output: string[] = [];
+
+    // Send periodic progress notifications
+    const progressInterval = setInterval(async () => {
+      await response.sendProgress(1, 1); // Indeterminate progress
+    }, 5000);
+
     child.stdout?.on('data', data => output.push(data.toString()));
     child.stderr?.on('data', data => output.push(data.toString()));
-    await new Promise<void>((resolve, reject) => {
-      child.on('close', code => {
-        if (code === 0)
-          resolve();
-        else
-          reject(new Error(`Failed to install browser: ${output.join('')}`));
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        child.on('close', code => {
+          if (code === 0)
+            resolve();
+          else
+            reject(new Error(`Failed to install browser: ${output.join('')}`));
+        });
       });
-    });
+    } finally {
+      clearInterval(progressInterval);
+    }
+
     response.setIncludeTabs();
   },
 });

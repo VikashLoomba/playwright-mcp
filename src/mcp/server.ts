@@ -28,12 +28,13 @@ export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextp
 const serverDebug = debug('pw:mcp:server');
 
 export type ClientVersion = { name: string, version: string };
+export type ProgressCallback = (progress: number, total?: number) => Promise<void>;
 export interface ServerBackend {
   name: string;
   version: string;
   initialize?(clientVersion: ClientVersion, roots: Root[]): Promise<void>;
   listTools(): Promise<Tool[]>;
-  callTool(name: string, args: CallToolRequest['params']['arguments']): Promise<CallToolResult>;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], sendProgress?: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(): void;
 }
 
@@ -61,7 +62,7 @@ export function createServer(backend: ServerBackend, runHeartbeat: boolean): Ser
   });
 
   let heartbeatRunning = false;
-  server.setRequestHandler(CallToolRequestSchema, async request => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     serverDebug('callTool', request);
     await initializedPromise;
 
@@ -70,8 +71,21 @@ export function createServer(backend: ServerBackend, runHeartbeat: boolean): Ser
       startHeartbeat(server);
     }
 
+    // Create progress callback if client requested progress notifications
+    const progressToken = request.params._meta?.progressToken;
+    const sendProgress = progressToken ? async (progress: number, total?: number) => {
+      await extra.sendNotification({
+        method: 'notifications/progress',
+        params: {
+          progressToken,
+          progress,
+          total,
+        },
+      });
+    } : undefined;
+
     try {
-      return await backend.callTool(request.params.name, request.params.arguments || {});
+      return await backend.callTool(request.params.name, request.params.arguments || {}, sendProgress);
     } catch (error) {
       return {
         content: [{ type: 'text', text: '### Result\n' + String(error) }],
