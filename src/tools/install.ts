@@ -22,7 +22,8 @@ import { defineTool } from './tool.js';
 
 
 // Progress notification constants
-const PROGRESS_UPDATE_INTERVAL_MS = 5000;
+const PROGRESS_UPDATE_INTERVAL_MS = 5000; // Send progress update every 5 seconds
+const INDETERMINATE_PROGRESS_MAX = 100; // Maximum value for cycling progress indicator
 
 const install = defineTool({
   capability: 'core-install',
@@ -44,9 +45,10 @@ const install = defineTool({
     const output: string[] = [];
 
     // Send periodic progress notifications (indeterminate progress)
+    // Progress cycles from 0 to INDETERMINATE_PROGRESS_MAX-1 to show activity
     let progressValue = 0;
     const progressInterval = setInterval(async () => {
-      progressValue = (progressValue + 1) % 100;
+      progressValue = (progressValue + 1) % INDETERMINATE_PROGRESS_MAX;
       await response.sendProgress(progressValue); // Send without total for indeterminate
     }, PROGRESS_UPDATE_INTERVAL_MS);
 

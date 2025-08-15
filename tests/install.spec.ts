@@ -27,14 +27,14 @@ test('browser_install', async ({ client, mcpBrowser }) => {
 
 test('browser_install with progress notifications', async ({ client, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
-  
+
   // Track progress notifications if we had a way to intercept them
   // For now, just verify the tool completes successfully with progress token
   const result = await client.callTool({
     name: 'browser_install',
     _meta: { progressToken: 'test-progress-token' }
   });
-  
+
   // Verify the tool completes successfully
   expect(result).toHaveProperty('content');
   expect(result.isError).not.toBe(true);
@@ -42,12 +42,12 @@ test('browser_install with progress notifications', async ({ client, mcpBrowser 
 
 test('browser_install without progress token', async ({ client, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
-  
+
   // Verify tool works without progress token (backward compatibility)
   const result = await client.callTool({
     name: 'browser_install',
   });
-  
+
   expect(result).toHaveProperty('content');
   expect(result.isError).not.toBe(true);
 });

@@ -82,6 +82,11 @@ export class Response {
     this._includeTabs = true;
   }
 
+  /**
+   * Send a progress notification to the MCP client if progress tracking is enabled.
+   * @param progress - Current progress value
+   * @param total - Optional total value. Omit for indeterminate progress.
+   */
   async sendProgress(progress: number, total?: number) {
     if (this._sendProgress)
       await this._sendProgress(progress, total);

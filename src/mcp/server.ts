@@ -28,6 +28,17 @@ export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextp
 const serverDebug = debug('pw:mcp:server');
 
 export type ClientVersion = { name: string, version: string };
+
+/**
+ * Callback for sending progress notifications to MCP clients.
+ *
+ * @param progress - Current progress value (0-based). For indeterminate progress, cycles through values.
+ * @param total - Optional total value. Omit for indeterminate progress, include for determinate.
+ *
+ * Usage:
+ * - Determinate: sendProgress(50, 100) indicates 50% complete
+ * - Indeterminate: sendProgress(n) without total indicates unknown completion
+ */
 export type ProgressCallback = (progress: number, total?: number) => Promise<void>;
 export interface ServerBackend {
   name: string;
