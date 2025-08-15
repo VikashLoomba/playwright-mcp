@@ -74,14 +74,19 @@ export function createServer(backend: ServerBackend, runHeartbeat: boolean): Ser
     // Create progress callback if client requested progress notifications
     const progressToken = request.params._meta?.progressToken;
     const sendProgress = progressToken ? async (progress: number, total?: number) => {
-      await extra.sendNotification({
-        method: 'notifications/progress',
-        params: {
-          progressToken,
-          progress,
-          total,
-        },
-      });
+      try {
+        await extra.sendNotification({
+          method: 'notifications/progress',
+          params: {
+            progressToken,
+            progress,
+            total,
+          },
+        });
+      } catch (error) {
+        // Log but don't fail the tool if progress notification fails
+        serverDebug('Progress notification failed:', error);
+      }
     } : undefined;
 
     try {

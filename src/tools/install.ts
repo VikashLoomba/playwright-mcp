@@ -21,6 +21,9 @@ import { z } from 'zod';
 import { defineTool } from './tool.js';
 
 
+// Progress notification constants
+const PROGRESS_UPDATE_INTERVAL_MS = 5000;
+
 const install = defineTool({
   capability: 'core-install',
   schema: {
@@ -31,7 +34,7 @@ const install = defineTool({
     type: 'destructive',
   },
 
-  handle: async (context, params, response) => {
+  handle: async (context, _params, response) => {
     const channel = context.config.browser?.launchOptions?.channel ?? context.config.browser?.browserName ?? 'chrome';
     const cliUrl = import.meta.resolve('playwright/package.json');
     const cliPath = path.join(fileURLToPath(cliUrl), '..', 'cli.js');
@@ -40,13 +43,15 @@ const install = defineTool({
     });
     const output: string[] = [];
 
-    // Send periodic progress notifications
+    // Send periodic progress notifications (indeterminate progress)
+    let progressValue = 0;
     const progressInterval = setInterval(async () => {
-      await response.sendProgress(1, 1); // Indeterminate progress
-    }, 5000);
+      progressValue = (progressValue + 1) % 100;
+      await response.sendProgress(progressValue); // Send without total for indeterminate
+    }, PROGRESS_UPDATE_INTERVAL_MS);
 
-    child.stdout?.on('data', data => output.push(data.toString()));
-    child.stderr?.on('data', data => output.push(data.toString()));
+    child.stdout?.on('data', (data: Buffer) => output.push(data.toString()));
+    child.stderr?.on('data', (data: Buffer) => output.push(data.toString()));
 
     try {
       await new Promise<void>((resolve, reject) => {
